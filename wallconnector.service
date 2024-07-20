@@ -1,0 +1,12 @@
+[Unit]
+Description=Tesla Wall Connector master
+
+[Service]
+Type=simple
+WorkingDirectory=%h/wallconnector
+ExecStart=%h/wallconnector/.venv/bin/python3 wallconnector.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
