@@ -11,9 +11,6 @@ Steps:
 1. Turn the rotary switch labelled SA3 to "F", for "Follower mode".
 1. Close and reconnect power to the TWC
 
-You _can_ install required the computer inside the TWC, but you don't have to.
-I run it in a box outside and route the RS485 cable through the enclosure. 
-
 ## Home Assistant setup
 
 To avoid the need for a custom Home Assistant integration, wallconnector uses MQTT Discovery.
@@ -24,7 +21,7 @@ Steps:
 
 ## Computer setup
 
-You need a linux computer that has:
+You need a computer that has:
 
    - Python 3 
    - A USB port for the USB RS485 converter 
@@ -88,6 +85,9 @@ Steps:
 While you can set max current to any decimal value, 
 the TWC only changes the actual charging current in bigger and somewhat uneven steps of
 around 0.3-0.5 A.
+
+The measured charging current never goes to zero while charging is ongoing. 
+If you set max current to zero the car will still draw around 0.5A.
 
 The TWCs don't like very frequent max current changes. 
 Try to let at least a couple of seconds elapse between each change. 
