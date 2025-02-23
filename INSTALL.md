@@ -48,13 +48,12 @@ Steps:
    The `username` and `password` fields are for the new user you created earlier.
 
         cp config.json.example config.json
-        vi config.json
+        nano config.json
 
-1. Create and activate a python virtual environment:
+1. Create a python virtual environment:
 
         python3 -m venv .venv
-        source .venv/bin/activate
-        pip install -r requirements.txt
+        .venv/bin/pip install -r requirements.txt
 
 1. Connect the RS485 wire to the USB dongle (ensure that D+ and D- are correct) and plug it in to the computer.
 
