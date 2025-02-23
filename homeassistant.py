@@ -4,8 +4,8 @@ from paho.mqtt.client import Client, MQTTMessage
 
 import json
 
-charging_current: Sensor = None
-max_current: Number = None
+charging_current: Sensor | None = None
+max_current: Number | None = None
 last_charging_current: float = 0
 set_current_callback: callable = None
 
@@ -20,6 +20,8 @@ def max_current_callback(_: Client, __, message: MQTTMessage):
     # write it to the WC
     if set_current_callback:
         value = set_current_callback(value)
+    else:
+        print('No set function defined')
     global max_current
     max_current.set_value(value)
 
