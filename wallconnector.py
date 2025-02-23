@@ -8,6 +8,7 @@ GET_SERIAL_NUMBER = b'\xFB\x19'
 GET_MODEL_NUMBER = b'\xFB\x1A'
 GET_FIRMWARE_VER = b'\xFB\x1B'
 GET_PLUG_STATE = b'\xFB\xB4'
+MAX_AMP_SET_INTERVAL = 10  # set max amps every 10 seconds
 
 
 def send(message: bytes, length=15):
@@ -33,11 +34,11 @@ def send(message: bytes, length=15):
 def send_linkready():
     for _ in range(5):
         send(b'\xFC\xE1\x77\x77\x77', length=13)
-        print('>linkready1')
+        print('>linkready1', flush=True)
         time.sleep(0.1)
     for _ in range(5):
         send(b'\xFC\xE2\x77\x77\x77', length=13)
-        print('>linkready2')
+        print('>linkready2', flush=True)
         time.sleep(0.1)
 
 
@@ -46,13 +47,12 @@ def send_max_current(current: float):
         current += 640
     amps = int(current * 100).to_bytes(2, 'big')
     send(b'\xFB\xE0\x77\x77' + slave_id + b'\x09' + amps)
+    print(f'>heartbeat max {max_current} A', flush=True)
 
 
 def send_heartbeat():
-    global max_current
     if max_current != slave_max_current:
         send_max_current(max_current)
-        print(f'>heartbeat max {max_current} A')
     else:
         # nop
         send(b'\xFB\xE0\x77\x77' + slave_id)
@@ -71,7 +71,8 @@ def parse_heartbeat(msg: bytes):
     drawn_current = round(float(int.from_bytes(msg[9:11])) / 100 * slave_current_calibration, 2)
     print(f'<slave heartbeat from {sender}, '
           f'state {state}, limit {slave_max_current} A, '
-          f'drawing {drawn_current} A')
+          f'drawing {drawn_current} A',
+          flush=True)
     global heartbeat_count
     heartbeat_count += 1
     if heartbeat_count & 1 == 0:
@@ -79,8 +80,9 @@ def parse_heartbeat(msg: bytes):
 
 
 def set_max_amps(current: float) -> float:
-    global max_current, set_current_timeout
+    print(f'set_max_amps({current})', flush=True)
     with lock:
+        global max_current, set_current_timeout
         if now > set_current_timeout:
             max_current = current
             set_current_timeout = now + 5
@@ -111,6 +113,9 @@ def parse_message():
     if checksum != received_checksum:
         print(f'<{input_buffer}')
         print(f'Calculated checksum {checksum:02x}, got {received_checksum:02x}')
+        # some currents seem to trigger bad checksum. decrease it slightly to fix.
+        global max_current
+        max_current -= 0.01
     else:
         global slave_serial, slave_model, slave_firmware
         match int.from_bytes(msg[:2]):
@@ -188,12 +193,18 @@ heartbeat_count = 0
 slave_current_calibration = 0.95  # it reports ~5 percent too high
 
 lock = threading.Lock()
+now = time.monotonic()
+set_amps_timeout = now + MAX_AMP_SET_INTERVAL
 
 while True:
     now = time.monotonic()
     if tty.in_waiting:
         read_tty()
     elif slave_id and now > last_heartbeat + heartbeat_interval:
+        # rewrite max amps every X seconds
+        if time.monotonic() > set_amps_timeout:
+            slave_max_current = 0
+            set_amps_timeout = time.monotonic() + MAX_AMP_SET_INTERVAL
         send_heartbeat()
         send_heartbeat()
         last_heartbeat = now
