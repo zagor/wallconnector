@@ -2,4 +2,5 @@
   "hostname": "homeassistant",
   "username": "username",
   "password": "password",
+  "max_current": 16
 }
