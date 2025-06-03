@@ -43,6 +43,7 @@ Steps:
 1. Copy and edit the configuration file. 
    The `hostname` field is the hostname or IP address of your Home Assistant instance.
    The `username` and `password` fields are for the new user you created earlier.
+   The `max_current` field is the highest selectable current to be shown in the Home Assistance interface.
 
         cp config.json.example config.json
         nano config.json
